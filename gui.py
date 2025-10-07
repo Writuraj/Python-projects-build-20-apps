@@ -1,6 +1,10 @@
 import functions
 import PySimpleGUI as sg
+import time
 
+sg.theme('DarkBlue')
+
+clock=sg.Text('',key='clock')
 label = sg.Text("Type in a to-do")
 input_box = sg.InputText(tooltip="Enter a to-do", key="todo")
 add_button = sg.Button("Add")
@@ -12,14 +16,16 @@ exit_button = sg.Button("exit")
 
 
 window = sg.Window("My To-Do App",
-                   layout=[[label],
+                   layout=[[clock],
+                           [label],
                            [input_box, add_button],
                            [list_box, edit_button,complete_button],
                            [exit_button]],
                    font=('Helvetica', 12))
 
 while True:
-    event, values = window.read()
+    event, values = window.read(timeout=10)#run the loop every ten miliseconds
+    window["clock"].update(value=time.strftime("%b %d, %Y %H:%M:%S"))
     print(event)
     print(values)
 
@@ -31,23 +37,28 @@ while True:
             functions.write_todos("test.txt", todos)
             window['todos'].update(todos)
         case "Complete":
-            todo_to_complete=values['todos'][0]
-            todos = functions.get_todos("test.txt")
-            todos.remove(todo_to_complete)
-            functions.write_todos("test.txt", todos)
-            window['todos'].update(values=todos)
+            try:
+                todo_to_complete=values['todos'][0]
+                todos = functions.get_todos("test.txt")
+                todos.remove(todo_to_complete)
+                functions.write_todos("test.txt", todos)
+                window['todos'].update(values=todos)
 
-            window['todo'].update(value="")
+                window['todo'].update(value="")
+            except IndexError:
+                sg.popup("Please select an item", font=('Helvetica', 20))
         case "Edit":
+            try :
+                todo_to_edit = values['todos'][0]
+                new_todo = values['todo']
 
-            todo_to_edit = values['todos'][0]
-            new_todo = values['todo']
+                todos = functions.get_todos("test.txt")
+                index = todos.index(todo_to_edit)
 
-            todos = functions.get_todos("test.txt")
-            index = todos.index(todo_to_edit)
-
-            todos[index] = new_todo + "\n"
-            functions.write_todos("test.txt", todos)
+                todos[index] = new_todo + "\n"
+                functions.write_todos("test.txt", todos)
+            except IndexError:
+                sg.popup("Please select an item",font=('Helvetica', 20))
 
             window['todos'].update(values=todos)
         case 'exit':
